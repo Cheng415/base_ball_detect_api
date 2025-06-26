@@ -48,7 +48,7 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=model)
         frame_idx += 1
 
         if len(batch_frames) == batch_size:
-            results = model.predict(source=batch_frames, imgsz=640, device='cuda:0', verbose=False)
+            results = model.predict(source=batch_frames, imgsz=640, device='cpu', verbose=False)
             for idx, result in enumerate(results):
                 boxes = result.boxes
                 if boxes is not None and len(boxes) > 0:
@@ -61,7 +61,7 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=model)
             frame_indices = []
 
     if batch_frames:
-        results = model.predict(source=batch_frames, imgsz=640, device='cuda:0', verbose=False)
+        results = model.predict(source=batch_frames, imgsz=640, device='cpu', verbose=False)
         for idx, result in enumerate(results):
             boxes = result.boxes
             if boxes is not None and len(boxes) > 0:
