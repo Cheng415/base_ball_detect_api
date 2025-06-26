@@ -73,3 +73,9 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=model)
 
     cap.release()
     return box_results
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
