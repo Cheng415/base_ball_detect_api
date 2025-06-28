@@ -9,10 +9,14 @@ from baseballcv.functions import LoadTools
 
 app = FastAPI()
 
-# 載入模型
-load_tools = LoadTools()
-model_path = load_tools.load_model("ball_tracking")
-model = YOLO(model_path)
+# 載入模型 (加入防呆)
+try:
+    load_tools = LoadTools()
+    model_path = load_tools.load_model("ball_tracking")
+    model = YOLO(model_path)
+except:
+    model_path = 'https://data.balldatalab.com/index.php/s/YkGBwbFtsf34ky3/download/ball_tracking_v4-YOLOv11.pt'
+    model = YOLO(model_path)
 
 @app.post("/predict")
 async def predict_video(file: UploadFile = File(...)):
