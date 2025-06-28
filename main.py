@@ -5,6 +5,8 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from ultralytics import YOLO
 from baseballcv.functions import LoadTools
+import torch
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 app = FastAPI()
 model = None  # 延遲載入模型用
@@ -53,7 +55,7 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None):
         frame_idx += 1
 
         if len(batch_frames) == batch_size:
-            results = model.predict(source=batch_frames, imgsz=640, device='cpu', verbose=False)
+            results = model.predict(source=batch_frames, imgsz=640, device=device, verbose=False)
             for idx, result in enumerate(results):
                 boxes = result.boxes
                 if boxes is not None and len(boxes) > 0:
