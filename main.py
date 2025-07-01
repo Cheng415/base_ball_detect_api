@@ -60,7 +60,7 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, 
         results = model.predict(source=frames, imgsz=640, device=device, verbose=False)
         for idx, result in enumerate(results):
             best_box = None
-            for box in result.boxes:
+            for box in result.boxes[:3]:
                 if filter_box(box):
                     best_box = box
                     break
