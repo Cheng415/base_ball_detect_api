@@ -38,6 +38,8 @@ async def predict_video(file: UploadFile = File(...)):
     return JSONResponse(content={"results": box_results})
 
 def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, device='cpu', aspect_ratio_thresh=(0.75, 1.33)):
+    import cv2
+
     cap = cv2.VideoCapture(video_path)
     frame_idx = 0
     box_results = []
@@ -54,6 +56,20 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, 
         aspect_ratio = width / height
         return aspect_ratio_thresh[0] <= aspect_ratio <= aspect_ratio_thresh[1]
 
+    def process_batch(frames, indices):
+        results = model.predict(source=frames, imgsz=640, device=device, verbose=False)
+        for idx, result in enumerate(results):
+            best_box = None
+            for box in result.boxes:
+                if filter_box(box):
+                    best_box = box
+                    break
+            if best_box:
+                x1, y1, x2, y2 = best_box.xyxy[0].tolist()
+                box_results.append((indices[idx], [x1, y1, x2, y2]))
+            else:
+                box_results.append((indices[idx], None))
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -64,36 +80,12 @@ def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, 
         frame_idx += 1
 
         if len(batch_frames) == batch_size:
-            results = model.predict(source=batch_frames, imgsz=640, device=device, verbose=False)
-            for idx, result in enumerate(results):
-                boxes = result.boxes
-                if boxes is not None and len(boxes) > 0:
-                    # 找出第一個滿足條件的 box
-                    filtered_boxes = [box for box in boxes if filter_box(box)]
-                    if filtered_boxes:
-                        x1, y1, x2, y2 = filtered_boxes[0].xyxy[0].tolist()
-                        box_results.append((frame_indices[idx], [x1, y1, x2, y2]))
-                    else:
-                        box_results.append((frame_indices[idx], None))
-                else:
-                    box_results.append((frame_indices[idx], None))
-            batch_frames = []
-            frame_indices = []
+            process_batch(batch_frames, frame_indices)
+            batch_frames.clear()
+            frame_indices.clear()
 
-    # 最後一批 frames
     if batch_frames:
-        results = model.predict(source=batch_frames, imgsz=640, device=device, verbose=False)
-        for idx, result in enumerate(results):
-            boxes = result.boxes
-            if boxes is not None and len(boxes) > 0:
-                filtered_boxes = [box for box in boxes if filter_box(box)]
-                if filtered_boxes:
-                    x1, y1, x2, y2 = filtered_boxes[0].xyxy[0].tolist()
-                    box_results.append((frame_indices[idx], [x1, y1, x2, y2]))
-                else:
-                    box_results.append((frame_indices[idx], None))
-            else:
-                box_results.append((frame_indices[idx], None))
+        process_batch(batch_frames, frame_indices)
 
     cap.release()
     return box_results
