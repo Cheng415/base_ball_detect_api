@@ -37,7 +37,7 @@ async def predict_video(file: UploadFile = File(...)):
 
     return JSONResponse(content={"results": box_results})
 
-def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, device='cpu', aspect_ratio_thresh=(0.75, 1.33)):
+def predict_pitch_boxes_from_video_batch(video_path, batch_size=16, model=None, device=device, aspect_ratio_thresh=(0.75, 1.33)):
     import cv2
 
     cap = cv2.VideoCapture(video_path)
